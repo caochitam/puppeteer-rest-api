@@ -1,0 +1,37 @@
+{
+  "name": "puppeteer-rest-api",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon",
+    "build": "tsc",
+    "start": "node dist/worker.js",
+    "bns": "tsc && node dist/worker.js",
+    "obf": "npx javascript-obfuscator dist/worker.min.js --output dist/worker-obf.js  --compact true --control-flow-flattening true   --string-array true --string-array-encoding base64   --string-array-threshold 0.75",
+    "esb": "esbuild src/worker.ts --bundle --platform=node --minify --keep-names --outfile=dist/worker.min.js",
+    "exe": "pkg dist/worker.min.js --targets node18-win-x64 --output dist/worker.exe",
+    "make-exe": "npm run esb && npm run exe"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "chrome-paths": "^1.0.1",
+    "express": "^5.1.0",
+    "markdown-it": "^14.1.0",
+    "puppeteer-core": "^24.23.0",
+    "socket.io-client": "^4.8.1",
+    "ua-parser-js": "^2.0.5"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/markdown-it": "^14.1.2",
+    "@types/node": "^24.6.2",
+    "esbuild": "^0.25.11",
+    "javascript-obfuscator": "^4.1.1",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,0 +1,580 @@
+{
+  "name": "POST Personal Facebook",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -256,
+        -48
+      ],
+      "id": "92a41467-19c0-40c3-bcfb-c6a71db2c7fd",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c284876d-3a52-4f96-ab56-42f2c344ed86",
+              "name": "chomePort",
+              "value": "9222",
+              "type": "string"
+            },
+            {
+              "id": "86f342fb-523b-4431-9ec8-8ebf2a530ce1",
+              "name": "hostAddress",
+              "value": "127.0.0.1",
+              "type": "string"
+            },
+            {
+              "id": "e3274bd1-2289-4fc5-8dfa-2e3028cfdc29",
+              "name": "driverPort",
+              "value": "3000",
+              "type": "string"
+            },
+            {
+              "id": "fb365711-9c81-4b23-b531-e1c8c848f053",
+              "name": "userDataDir",
+              "value": "C:\\ChromeProfiles",
+              "type": "string"
+            },
+            {
+              "id": "96ffef5f-b1f0-4c36-aa5f-888e35c5d4b2",
+              "name": "profileDirectory",
+              "value": "Default",
+              "type": "string"
+            },
+            {
+              "id": "d2774347-ec06-4a0c-9c16-ab60b55d04ad",
+              "name": "chromePath",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "7a2ccd10-f15d-43ba-b3cc-232ac80c357d",
+              "name": "headless",
+              "value": "false",
+              "type": "string"
+            },
+            {
+              "id": "375b00ab-8214-4093-ac76-295fa854458d",
+              "name": "anotherArgs",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -80,
+        -48
+      ],
+      "id": "70b09e01-e13e-4d79-9633-cc313f5e7d3b",
+      "name": "Setting",
+      "notes": "anotherArgs: --start-maximized"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('setupData').item.json.driverUrl }}/start-browser",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "=debuggingPort",
+              "value": "={{ $('Setting').item.json.chomePort }}"
+            },
+            {
+              "name": "headless",
+              "value": "={{ $('Setting').item.json.headless }}"
+            },
+            {
+              "name": "chromePath",
+              "value": "={{ $('Setting').item.json.chromePath }}"
+            },
+            {
+              "name": "userDataDir",
+              "value": "={{ $('Setting').item.json.userDataDir }}"
+            },
+            {
+              "name": "profileDirectory",
+              "value": "={{ $('Setting').item.json.profileDirectory }}"
+            },
+            {
+              "name": "anotherArgs",
+              "value": "={{ $('Setting').item.json.anotherArgs }}"
+            },
+            {
+              "name": "welcomeUrl",
+              "value": "={{ $('setupData').item.json.driverUrl }}/"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -80,
+        144
+      ],
+      "id": "843fcd7f-ef09-427f-9ea0-716e12f03b87",
+      "name": "Mở trình duyệt"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2d7836ba-8eba-4b0b-a17d-09ffec7ef158",
+              "name": "driverUrl",
+              "value": "=http://{{ $json.hostAddress }}:{{ $json.driverPort }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        96,
+        -48
+      ],
+      "id": "845ec46f-1fb5-4bb1-9dfa-fbdd5230d5ec",
+      "name": "setupData"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('setupData').item.json.driverUrl }}/new-tab",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        96,
+        240
+      ],
+      "id": "3e0dca6c-7dca-4329-a6c3-abf9fae5ca2e",
+      "name": "New tab"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('setupData').item.json.driverUrl }}/go-to",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "=pageId",
+              "value": "={{ $json.pageId }}"
+            },
+            {
+              "name": "url",
+              "value": "https://www.facebook.com/composer/"
+            },
+            {
+              "name": "userAgent",
+              "value": "Mozilla/5.0 (Linux; Android 7.0; SM-G955U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.107 Mobile Safari/537.36"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        288,
+        240
+      ],
+      "id": "5a638085-c49f-454e-96de-e4c75dcaa339",
+      "name": "Mở fb composer"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('setupData').item.json.driverUrl }}/type",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "=pageId",
+              "value": "={{ $('New tab').item.json.pageId }}"
+            },
+            {
+              "name": "selector",
+              "value": ".textbox-container"
+            },
+            {
+              "name": "text",
+              "value": "=🌪️ NGẬP TRONG CÔNG VIỆC? HÃY ĐỂ N8N LÀM THAY BẠN!  Bạn có bao giờ thấy mình bận đến mức không còn thời gian để thở?\n📧 Email chồng chất\n📊 Báo cáo thủ công \n💬 Tin nhắn khách hàng trả hoài không hết \n📁 Copy – paste dữ liệu mỗi ngày như cái máy  \n👉 Tin tôi đi, bạn không cần phải sống như vậy nữa.  Thời đại AI và tự động hóa đã đến rồi. \nVà chỉ với một công cụ mã nguồn mở tên là n8n, bạn có thể: \n✅ Tự động hóa gửi email chăm sóc khách hàng \n✅ Tự động cập nhật dữ liệu Google Sheet \n✅ Kết nối Facebook, Zalo, Notion, CRM… trong vài phút \n✅ Tiết kiệm hàng chục giờ mỗi tuần để tập trung vào việc quan trọng thật sự  \n💡 Bạn không cần biết code, chỉ cần kéo – thả là xong. Một người – một máy tính – cũng có thể xây cả hệ thống vận hành thông minh.  \n🔥 Hãy bắt đầu ngay hôm nay. Người nào biết cách tự động hóa sớm, người đó sẽ giành ưu thế trong kỷ nguyên AI.\n{{ Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2) }}\n\n#TựĐộngHóa #n8n #AIBusiness #HiệuSuấtCao #LàmViệcThôngMinh "
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -80,
+        448
+      ],
+      "id": "1f933404-ae9f-4e1f-a364-5da06f784dc0",
+      "name": "Nhập liệu"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('setupData').item.json.driverUrl }}/click",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "=pageId",
+              "value": "={{ $('New tab').item.json.pageId }}"
+            },
+            {
+              "name": "selector",
+              "value": "[data-action-id=\"5\"]"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -256,
+        448
+      ],
+      "id": "9b1a1292-e6f2-4fe5-96e0-4394a236d7e4",
+      "name": "Click to editor"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('setupData').item.json.driverUrl }}/click",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "=pageId",
+              "value": "={{ $('New tab').item.json.pageId }}"
+            },
+            {
+              "name": "selector",
+              "value": "[data-action-id=\"1\"]"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        96,
+        448
+      ],
+      "id": "a2439617-2713-4a64-8c8e-96a5d2c7522b",
+      "name": "Click POST button"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('setupData').item.json.driverUrl }}/wait-for-function",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "=pageId",
+              "value": "={{ $('New tab').item.json.pageId }}"
+            },
+            {
+              "name": "fn",
+              "value": "(() => { const span = document.querySelector('span.f2'); return !window.location.href.includes('composer') && (!span || !span.textContent.includes('Uploading your post')); })()"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        288,
+        448
+      ],
+      "id": "2152c4f9-0ae6-449a-92b3-b2d515050927",
+      "name": "Đợi post xong"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('setupData').item.json.driverUrl }}/evaluate",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "=pageId",
+              "value": "={{ $('New tab').item.json.pageId }}"
+            },
+            {
+              "name": "fn",
+              "value": "async () => {\n  const el = document.querySelectorAll('.displayed>div>div>div[data-mcomponent=\"MContainer\"][data-focusable=\"true\"][tabindex=\"0\"]')[3];\n  if (el) el.click();\n\n  // Đợi URL đổi\n  await new Promise(resolve => {\n    const check = () => {\n      if (window.location.href.includes('story.php?story_fbid')) {\n        resolve();\n      } else {\n        requestAnimationFrame(check);\n      }\n    };\n    check();\n  });\n\n  return window.location.href;\n}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        448
+      ],
+      "id": "f633f63a-2b05-4523-a045-407e09635301",
+      "name": "Trả về post url"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.driverUrl }}/check-browser",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "=debuggingPort",
+              "value": "={{ $('Setting').item.json.chomePort }}"
+            },
+            {
+              "name": "headless",
+              "value": "={{ $('Setting').item.json.headless }}"
+            },
+            {
+              "name": "chromePath",
+              "value": "={{ $('Setting').item.json.chromePath }}"
+            },
+            {
+              "name": "userDataDir",
+              "value": "={{ $('Setting').item.json.userDataDir }}"
+            },
+            {
+              "name": "profileDirectory",
+              "value": "={{ $('Setting').item.json.profileDirectory }}"
+            },
+            {
+              "name": "anotherArgs",
+              "value": "={{ $('Setting').item.json.anotherArgs }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        272,
+        -48
+      ],
+      "id": "f634c78f-39de-4917-96aa-e11884a11c99",
+      "name": "Kiểm tra kết nối"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "877d50bf-37df-457b-92b8-9b50ff2ef70c",
+              "leftValue": "={{ !$json.open }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -256,
+        240
+      ],
+      "id": "9a1fb37c-1e90-46de-96c8-5427f7b8c409",
+      "name": "Nếu chưa mở"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Setting",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Setting": {
+      "main": [
+        [
+          {
+            "node": "setupData",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mở trình duyệt": {
+      "main": [
+        [
+          {
+            "node": "New tab",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "setupData": {
+      "main": [
+        [
+          {
+            "node": "Kiểm tra kết nối",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New tab": {
+      "main": [
+        [
+          {
+            "node": "Mở fb composer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mở fb composer": {
+      "main": [
+        [
+          {
+            "node": "Click to editor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Nhập liệu": {
+      "main": [
+        [
+          {
+            "node": "Click POST button",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Click to editor": {
+      "main": [
+        [
+          {
+            "node": "Nhập liệu",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Click POST button": {
+      "main": [
+        [
+          {
+            "node": "Đợi post xong",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Đợi post xong": {
+      "main": [
+        [
+          {
+            "node": "Trả về post url",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Kiểm tra kết nối": {
+      "main": [
+        [
+          {
+            "node": "Nếu chưa mở",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Nếu chưa mở": {
+      "main": [
+        [
+          {
+            "node": "Mở trình duyệt",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "New tab",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "98d5bd8c-301c-4730-beef-a52a3b90de44",
+  "meta": {
+    "instanceId": "bbee589e36145fda25096ca32e0d4cbd90bd1e1d3a72fb13089d266608defa1d"
+  },
+  "id": "sN0atSTUrZUoIoPp",
+  "tags": [
+    {
+      "createdAt": "2025-10-04T10:44:17.951Z",
+      "updatedAt": "2025-10-04T10:44:17.951Z",
+      "id": "olMlsEqGQxtFE766",
+      "name": "PUPETEER_API"
+    }
+  ]
+}
