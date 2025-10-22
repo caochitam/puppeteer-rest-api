@@ -1,16 +1,18 @@
 {
   "name": "puppeteer-rest-api",
-  "version": "1.0.0",
+  "version": "1.3.0",
   "main": "index.js",
   "scripts": {
     "dev": "nodemon",
     "build": "tsc",
     "start": "node dist/worker.js",
     "bns": "tsc && node dist/worker.js",
-    "obf": "npx javascript-obfuscator dist/worker.min.js --output dist/worker-obf.js  --compact true --control-flow-flattening true   --string-array true --string-array-encoding base64   --string-array-threshold 0.75",
+    "obfbk": "npx javascript-obfuscator dist/worker.min.js --output dist/worker-obf.js",
+    "obf": "npx javascript-obfuscator dist/worker.min.js --output dist/worker-obf.js --selfDefending false --deadCodeInjection false",
+    "cpgo": "copy packer.go dist\\",
     "esb": "esbuild src/worker.ts --bundle --platform=node --minify --keep-names --outfile=dist/worker.min.js",
-    "exe": "pkg dist/worker.min.js --targets node18-win-x64 --output dist/worker.exe",
-    "make-exe": "npm run esb && npm run exe"
+    "exe": "go build -ldflags=\"-s -w\" -o dist/auto.exe dist/packer.go",
+    "make": "npm run esb && npm run cpgo && npm run exe"
   },
   "keywords": [],
   "author": "",
