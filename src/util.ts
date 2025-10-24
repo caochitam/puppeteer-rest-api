@@ -126,3 +126,4 @@ export function askQuestion(question: string): Promise<string> {
     });
   });
 }
+export type BrowserResult = { success: boolean; [key: string]: any };

@@ -1,175 +1,172 @@
 import { io } from "socket.io-client";
 import * as Br from "./browser";
 import { askQuestion, parseArgs } from "./util";
+import express from "express";
+import cors from "cors";
 
 (async () => {
+
+  // ==========================
+  // 📦 Map các handler
+  // ==========================
+  const handlerMap: Record<string, Function> = {
+    "start-browser": Br.startBrowser,
+    "new-tab": Br.newTab,
+    "go-to": Br.goTo,
+    "click": Br.click,
+    "type": Br.type,
+    "wait-for-selector": Br.waitForSelector,
+    "wait-for-function": Br.waitForFunction,
+    "evaluate": Br.evaluate,
+    "close-tab": Br.closeTab,
+    "check-browser": Br.checkBrowser,
+    "cookies": Br.cookies,
+    "set-cookie": Br.setCookie,
+    "reload": Br.reload,
+  };
+
   // =====================
   // Đọc tham số dòng lệnh
   // =====================
 
   const args = parseArgs();
 
-  // Các cách lấy apiKey: --apiKey=xxx OR first positional OR env API_KEY
+  // Các cách lấy channel: --channel=xxx OR first positional OR env CHANNEL
   let apiKey =
-    (args as any).apiKey ||
-    (args as any)["api-key"] ||
+    (args as any).channel ||
+    (args as any)["channel"] ||
     args._[0] ||
-    process.env.API_KEY;
+    process.env.channel;
 
   if (!apiKey) {
     console.error(
-      `Thiếu apiKey!
-      Cách sử dụng: auto.exe <apiKey> OR auto.exe --apiKey=XXX OR set API_KEY env var
-      Nếu chưa có apiKey, bạn có thể dăng ký tại https://auto.pada.vn`
+      `Thiếu ID KÊNH!
+      Cách sử dụng: auto.exe <ID_KÊNH> OR auto.exe --channel=ID_KÊNH OR set ID_KÊNH env var
+      Nếu chưa có channel, bạn có thể dăng ký tại https://auto.pada.vn`
     );
-    apiKey = await askQuestion("Bạn cũng có thể nhập apiKey tại đây: ");
+    apiKey = await askQuestion("Bạn cũng có thể nhập ID KÊNH hoặc cổng localhost tại đây: ");
   }
 
-  // Nếu vẫn không nhập gì thì thoát
-  if (!apiKey) {
-    console.error("❌ Không có apiKey. Thoát chương trình.");
-    process.exit(1);
-  }
+  // Nếu không có apiKey HOẶC apiKey là dạng số => chạy chế độ LOCAL EXPRESS SERVER
+  if (!apiKey || !isNaN(Number(apiKey))) {
+    const PORT = Number(apiKey) || process.env.PORT || 3000;
+    console.warn("⚠️ Không có ID KÊNH => Chạy ở chế độ LOCAL API (Express) với cổng ", PORT);
 
-  console.log("Khởi động worker với apiKey =", apiKey);
 
-  // =====================
-  // ⚙️ Cấu hình kết nối
-  // =====================
-  const SERVER_URL = String.fromCharCode(
-    ...[104, 116, 116, 112, 115, 58, 47, 47, 97, 117, 116, 111, 46, 112, 97, 100, 97, 46, 118, 110]
-  ); // https://auto.pada.vn
 
-  const socket = io(SERVER_URL, {
-    extraHeaders: {
-      Authorization: `Bearer ${apiKey}`,
-    },
-    transports: ["websocket"],
-    reconnection: true,
-    reconnectionAttempts: Infinity,
-    reconnectionDelay: 2000,
-  });
+    const app = express();
 
-  // =====================
-  // 📡 Kết nối cơ bản
-  // =====================
-  socket.on("connect", () => {
-    console.log("✅ Đã kết nối WS tới server! Socket id:", socket.id);
-  });
+    app.use(cors());
+    app.use(express.json({ limit: 'Infinity' }));
+    app.use(express.urlencoded({ extended: true, limit: 'Infinity' }));
 
-  socket.on("welcome", (msg) => console.log("📨", msg));
-  socket.on("disconnect", (reason) => console.log("❌ Ngắt:", reason));
-  socket.on("connect_error", (err) => console.error("⚠️ Lỗi:", err.message));
+    // Endpoint chính: /r/:ep
+    app.post("/r/:ep", async (req: any, res: any) => {
+      const ep = req.params.ep;
+      const fn = handlerMap[ep]; // Dùng lại handlerMap toàn cục
 
-  // =====================
-  // 🧩 Hàm tiện ích phản hồi
-  // =====================
-  async function handleRequest(event: string, payload: any, handler: (payload: any) => Promise<any>) {
-    const requestId = payload._requestId;
-    try {
-      const result = await handler(payload);
-      socket.emit(`response-${requestId}`, result);
-    } catch (err: any) {
-      socket.emit(`response-${requestId}`, {
-        error: err.message || "Internal error",
-        stack: err.stack,
+      if (!fn) {
+        return res.status(404).json({
+          success: false,
+          error: `Unknown endpoint: ${ep}`,
+        });
+      }
+
+      try {
+        const payload = req.body || {};
+        const result = await fn(payload);
+        res.json(result);
+      } catch (err: any) {
+        console.error(`❌ Lỗi khi xử lý endpoint '${ep}':`, err);
+        res.status(500).json({
+          success: false,
+          error: err.message || "Internal error",
+          stack: err.stack,
+        });
+      }
+    });
+
+    // Root để test nhanh
+    app.get("/", (req: any, res: any) => {
+      res.send({
+        message: "Local worker API is running....\nTruy cập https://auto.pada.vn để biết thêm chi tiết.",
+        availableEndpoints: Object.keys(handlerMap),
       });
+    });
+
+    app.listen(PORT, () => {
+      console.log(`🚀 Local API server chạy tại http://localhost:${PORT}`);
+      console.log(`Điều khiển thông qua API bằng cách POST tới http://localhost:${PORT}/r/:endpoint với body JSON tương ứng.`);
+      console.log("🧩 Các endpoint khả dụng:", Object.keys(handlerMap).join(", "));
+      console.log("📚 Xem tài liệu tại https://auto.pada.vn");
+    });
+
+    // Ngừng socket mode, chỉ chạy local API
+    return;
+  }
+  // Kết nối tới server với channel đã có
+  else {
+    console.log("Khởi động controller với channel =", apiKey);
+
+    // =====================
+    // ⚙️ Cấu hình kết nối
+    // =====================
+    const SERVER_URL = String.fromCharCode(
+      ...[104, 116, 116, 112, 115, 58, 47, 47, 97, 117, 116, 111, 46, 112, 97, 100, 97, 46, 118, 110]
+    ); // https://auto.pada.vn
+
+    const socket = io(SERVER_URL, {
+      extraHeaders: {
+        Authorization: `Bearer ${apiKey}`,
+      },
+      transports: ["websocket"],
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 2000,
+    });
+
+    // =====================
+    // 📡 Kết nối cơ bản
+    // =====================
+    socket.on("connect", () => {
+      console.log("✅ Đã kết nối WS tới server!");
+    });
+
+    socket.on("welcome", (msg) => console.log("📨", msg));
+    socket.on("disconnect", (reason) => console.log("❌ Ngắt:", reason));
+    socket.on("connect_error", (err) => console.error("⚠️ Lỗi:", err.message));
+
+
+    // =====================
+    // 🧩 Hàm tiện ích phản hồi
+    // =====================
+    async function handleRequest(event: string, payload: any) {
+      const requestId = payload._requestId;
+      const fn = handlerMap[event];
+      if (!fn) {
+        socket.emit(`response-${requestId}`, { error: `Unknown event: ${event}` });
+        return;
+      }
+
+      try {
+        const result = await fn(payload);
+        socket.emit(`response-${requestId}`, result);
+      } catch (err: any) {
+        socket.emit(`response-${requestId}`, {
+          success: false,
+          error: err.message || "Internal error",
+          stack: err.stack,
+        });
+      }
+    }
+
+    // =====================
+    // 🧠 Đăng ký tất cả event
+    // =====================
+    for (const event of Object.keys(handlerMap)) {
+      socket.on(event, async (payload) => handleRequest(event, payload));
     }
   }
 
-  // =====================
-  // ⚙️ Các event xử lý
-  // =====================
 
-  // 1️⃣ Start Browser
-  socket.on("start-browser", async (payload) => {
-    await handleRequest("start-browser", payload, async (data) => {
-      const result = await Br.startBrowser(data);
-      if (data.welcomeUrl) {
-        await Br.goTo("0", data.welcomeUrl);
-      }
-      return { success: true, message: "Browser started" };
-    });
-  });
-
-  // 2️⃣ New Tab
-  socket.on("new-tab", async (payload) => {
-    await handleRequest("new-tab", payload, async () => {
-      if (!Br.browser) throw new Error("Browser not started");
-      const tabID = await Br.newTab();
-      return { tabID };
-    });
-  });
-
-  // 3️⃣ Go To
-  socket.on("go-to", async (payload) => {
-    await handleRequest("go-to", payload, async ({ tabID, url, userAgent, options }) => {
-      if (!tabID || !url) throw new Error("Missing tabID or url");
-      const result = await Br.goTo(tabID, url, userAgent, options);
-      return { success: !!result };
-    });
-  });
-
-  // 4️⃣ Click
-  socket.on("click", async (payload) => {
-    await handleRequest("click", payload, async ({ tabID, selector, options }) => {
-      if (!tabID || !selector) throw new Error("Missing tabID or selector");
-      const result = await Br.click(tabID, selector, options);
-      return { success: !!result };
-    });
-  });
-
-  // 5️⃣ Type
-  socket.on("type", async (payload) => {
-    await handleRequest("type", payload, async ({ tabID, selector, text, options }) => {
-      if (!tabID || !selector || typeof text !== "string")
-        throw new Error("Missing tabID, selector, or text");
-      const result = await Br.type(tabID, selector, text, options);
-      return { success: !!result };
-    });
-  });
-
-  // 6️⃣ Wait For Selector
-  socket.on("wait-for-selector", async (payload) => {
-    await handleRequest("wait-for-selector", payload, async ({ tabID, selector, options }) => {
-      if (!tabID || !selector) throw new Error("Missing tabID or selector");
-      const result = await Br.waitForSelector(tabID, selector, options);
-      return { success: !!result };
-    });
-  });
-
-  // 7️⃣ Wait For Function
-  socket.on("wait-for-function", async (payload) => {
-    await handleRequest("wait-for-function", payload, async ({ tabID, fn, options }) => {
-      if (!tabID || !fn) throw new Error("Missing tabID or fn");
-      const result = await Br.waitForFunction(tabID, fn, options);
-      return { success: !!result };
-    });
-  });
-
-  // 8️⃣ Evaluate
-  socket.on("evaluate", async (payload) => {
-    await handleRequest("evaluate", payload, async ({ tabID, fn }) => {
-      if (!tabID || !fn) throw new Error("Missing tabID or fn");
-      const result = await Br.evaluate(tabID, fn);
-      return result;
-    });
-  });
-
-  // 9️⃣ Close Tab
-  socket.on("close-tab", async (payload) => {
-    await handleRequest("close-tab", payload, async ({ tabID }) => {
-      if (!tabID) throw new Error("Missing tabID");
-      const result = await Br.closeTab(tabID);
-      return { success: !!result };
-    });
-  });
-
-  // 🔟 Check Browser
-  socket.on("check-browser", async (payload) => {
-    await handleRequest("check-browser", payload, async () => {
-      const isOpen = !!Br.browser && Br.browser?.connected === true;
-      return { opened: isOpen };
-    });
-  });
 })();
