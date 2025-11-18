@@ -3,7 +3,7 @@ import * as Br from "./browser";
 import { askQuestion, parseArgs } from "./util";
 import express from "express";
 import cors from "cors";
-
+console.log("🚀 Auto Browser Controller V1.4.1");
 (async () => {
 
   // ==========================
@@ -123,6 +123,7 @@ import cors from "cors";
       reconnection: true,
       reconnectionAttempts: Infinity,
       reconnectionDelay: 2000,
+      timeout: 20000,
     });
 
     // =====================
@@ -135,7 +136,16 @@ import cors from "cors";
     socket.on("welcome", (msg) => console.log("📨", msg));
     socket.on("disconnect", (reason) => console.log("❌ Ngắt:", reason));
     socket.on("connect_error", (err) => console.error("⚠️ Lỗi:", err.message));
+    // Gửi ping định kỳ mỗi 30s
+    setInterval(() => {
+      if (socket.connected) {
+        socket.emit("keepalive", Date.now());
+      }
+    }, 30000);
 
+    socket.on("keepalive_ack", (data) => {
+      // console.log("✅ Pong từ server:", data);
+    });
 
     // =====================
     // 🧩 Hàm tiện ích phản hồi
