@@ -1,4 +1,5 @@
 import puppeteer, { Browser, EvaluateFunc, Page, PuppeteerLifeCycleEvent } from "puppeteer-core";
+// import puppeteer from "puppeteer-extra";
 import { spawn } from "child_process";
 import { buildUserAgentMetadata, BrowserResult } from "./util";
 const chromePaths = require("chrome-paths");
@@ -423,4 +424,3 @@ export async function reload(payload: { tabID: string; options?: { timeout?: num
     return { success: false, error: err.message || "Reload thất bại" };
   }
 }
-
