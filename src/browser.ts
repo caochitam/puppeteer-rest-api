@@ -380,6 +380,38 @@ export async function cookies(payload: { tabID: string }): Promise<BrowserResult
 }
 
 /**
+ * Lấy headerstring của tab
+ */
+export async function cookieHeaderString(payload: { tabID: string }): Promise<BrowserResult> {
+  try {
+    const { tabID } = payload;
+    const page = pagesMap.get(tabID);
+
+    if (!page) {
+      return { success: false, error: `Không tìm thấy tab ${tabID}` };
+    }
+
+    // Lấy toàn bộ cookies của context/tab
+    const cookies = await page.browserContext().cookies();
+
+    // Convert sang header string dạng "name=value; name=value;"
+    const headerString =
+      cookies.map((c) => `${c.name}=${c.value}`).join("; ") + ";";
+
+    console.log("===Got HEADER STRING ===");
+    return {
+      success: true,
+      headerString,
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: err.message || "Lỗi lấy header string",
+    };
+  }
+}
+
+/**
  * Đặt cookies cho tab
  */
 export async function setCookie(payload: { tabID: string; cookies: any[] | string }): Promise<BrowserResult> {
@@ -422,5 +454,96 @@ export async function reload(payload: { tabID: string; options?: { timeout?: num
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err.message || "Reload thất bại" };
+  }
+}
+
+// ==============================
+// Cuộn xuống trang (tự tìm container cuộn được)
+// ==============================
+export async function scrollDown(payload: {
+  tabID: string;
+  distance?: number; // px muốn cuộn, mặc định 800
+}): Promise<BrowserResult> {
+  try {
+    const { tabID, distance } = payload;
+    let page: Page | undefined;
+
+    if (tabID === "0") {
+      const pages = await browser?.pages();
+      page = pages && pages.length > 0 ? pages[0] : undefined;
+    } else {
+      page = pagesMap.get(tabID);
+    }
+
+    if (!page) {
+      return { success: false, error: `Không tìm thấy tab ${tabID}` };
+    }
+
+    const dist = distance ?? 800;
+
+    const pos = await page.evaluate((d) => {
+      const doc = document.scrollingElement || document.documentElement || document.body;
+
+      // Tìm các element có thể cuộn theo trục Y
+      const scrollables: HTMLElement[] = [];
+      const all = Array.from(document.querySelectorAll<HTMLElement>("*"));
+
+      for (const el of all) {
+        const style = window.getComputedStyle(el);
+        const canScrollY =
+          (style.overflowY === "auto" || style.overflowY === "scroll") &&
+          el.scrollHeight > el.clientHeight + 10;
+
+        if (canScrollY) {
+          scrollables.push(el);
+        }
+      }
+
+      // Chọn element có scrollHeight lớn nhất (ưu tiên doc nếu nó lớn)
+      let target: HTMLElement | Element | null = doc;
+      let maxScrollHeight = doc ? doc.scrollHeight : 0;
+
+      for (const el of scrollables) {
+        if (el.scrollHeight > maxScrollHeight) {
+          maxScrollHeight = el.scrollHeight;
+          target = el;
+        }
+      }
+
+      let beforeY = 0;
+      let afterY = 0;
+
+      if (target === doc || target === document.documentElement || target === document.body) {
+        beforeY = window.scrollY;
+        window.scrollBy(0, d);
+        afterY = window.scrollY;
+      } else if (target instanceof HTMLElement) {
+        beforeY = target.scrollTop;
+        target.scrollTop = target.scrollTop + d;
+        afterY = target.scrollTop;
+      }
+
+      return {
+        usedWindow: target === doc,
+        beforeY,
+        afterY,
+        innerHeight: window.innerHeight,
+        scrollHeight: maxScrollHeight,
+      };
+    }, dist);
+
+    console.log(
+      `Scrolled ${dist}px on tab ${tabID}: ${pos.beforeY} -> ${pos.afterY}, usedWindow=${pos.usedWindow}`
+    );
+
+    return {
+      success: true,
+      position: pos,
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: err.message || "Cuộn trang thất bại",
+    };
   }
 }

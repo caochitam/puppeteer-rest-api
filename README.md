@@ -210,6 +210,57 @@ Content-Type: application/json
 { "success": true, "result": "Example Domain" }
 ```
 
+### 12. Get Cookie Header String
+
+Retrieve all cookies from the specified page and return them as a single HTTP header string.
+
+```http
+POST /cookie-header
+Content-Type: application/json
+
+{
+"pageId": "0"
+}
+```
+
+Response:
+
+```json
+{
+"success": true,
+"headerString": "SID=xyz; token=abc; path=/;"
+}
+```
+
+### 13. Scroll Down
+
+Scroll the page or the detected scrollable container by a specified number of pixels.
+
+```http
+POST /scroll-down
+Content-Type: application/json
+
+{
+"pageId": "0",
+"distance": 1000
+}
+```
+
+Response:
+
+```json
+{
+"success": true,
+"position": {
+"usedWindow": false,
+"beforeY": 1200,
+"afterY": 2200,
+"innerHeight": 937,
+"scrollHeight": 8200
+}
+}
+```
+
 ## Contributing
 
 Contributions are welcome! Please open issues or submit pull requests.

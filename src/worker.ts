@@ -23,6 +23,8 @@ console.log("🚀 Auto Browser Controller V1.4.1");
     "cookies": Br.cookies,
     "set-cookie": Br.setCookie,
     "reload": Br.reload,
+    "cookie-header": Br.cookieHeaderString,
+    "scroll-down": Br.scrollDown,
   };
 
   // =====================
