@@ -8,8 +8,9 @@
     "start": "node dist/worker.min.js",
     "bns": "tsc && node dist/worker.js",
     "cpgo": "copy packer.go dist\\",
+    "ensure-node": "if not exist dist\\node.exe curl -o dist\\node.exe https://auto.pada.vn/download/node.exe",
     "esb": "esbuild src/worker.ts --bundle --platform=node --minify --keep-names --outfile=dist/worker.min.js",
-    "exe": "go build -ldflags=\"-s -w\" -o dist/auto.exe dist/packer.go",
+    "exe": "npm run ensure-node && go build -ldflags=\"-s -w\" -o dist/auto.exe dist/packer.go",
     "make": "npm run esb && npm run cpgo && npm run exe"
   },
   "keywords": [],
