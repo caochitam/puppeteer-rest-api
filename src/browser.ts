@@ -76,10 +76,11 @@ export async function startBrowser(payload: {
             try {
               if (browser) {
                 const pages = await browser.pages();
-                const firstPage = pages && pages.length > 0 ? pages[0] : await browser.newPage();
+                let firstPage = pages && pages.length > 0 ? pages[0] : await browser.newPage();
+                await firstPage?.setViewport(null);
                 const welcome = options.welcomeUrl && String(options.welcomeUrl).trim() ? options.welcomeUrl.trim() : "https://auto.pada.vn";
-                firstPage!.goto(welcome, { timeout: 30000, waitUntil: "load" });
-                console.log(`Opening welcome URL: ${welcome}`);
+                firstPage?.goto(welcome, { timeout: 30000, waitUntil: "load" });
+                console.log(`Open welcome URL: ${welcome}`);
               }
             } catch (err) {
               console.warn("Failed to open welcome URL", err);
