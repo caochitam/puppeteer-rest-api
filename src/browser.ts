@@ -224,18 +224,32 @@ export async function goTo(payload: {
 export async function click(payload: {
   tabID: string;
   selector: string;
-  options?: { delay?: number; button?: "left" | "right" | "middle"; clickCount?: number; timeout?: number };
+  delay?: string | number;
+  button?: "left" | "right" | "middle"; 
+  clickCount?: string | number; 
+  timeout?: string | number;
 }): Promise<BrowserResult> {
   try {
-    const { tabID, selector, options } = payload;
+    const { tabID, selector, delay, button, clickCount, timeout } = payload;
     const page = pagesMap.get(tabID);
     if (!page) return { success: false, error: `Không tìm thấy tab ${tabID}` };
 
-    await page.waitForSelector(selector, { timeout: options?.timeout ?? 30000 });
+    // Safely coerce numeric values and provide defaults when invalid
+    let safeTimeout = timeout != null ? Number(timeout) : 30000;
+    if (!Number.isFinite(safeTimeout) || safeTimeout < 0) safeTimeout = 30000;
+
+    let safeDelay = delay != null ? Number(delay) : 0;
+    if (!Number.isFinite(safeDelay) || safeDelay < 0) safeDelay = 0;
+
+    let safeClickCount = clickCount != null ? Number(clickCount) : 1;
+    if (!Number.isFinite(safeClickCount) || safeClickCount < 1) safeClickCount = 1;
+    safeClickCount = Math.floor(safeClickCount);
+
+    await page.waitForSelector(selector, { timeout: safeTimeout });
     await page.click(selector, {
-      delay: options?.delay ?? 0,
-      button: options?.button ?? "left",
-      clickCount: options?.clickCount ?? 1,
+      delay: safeDelay,
+      button: button ?? "left",
+      clickCount: safeClickCount,
     });
 
     console.log(`Clicked selector "${selector}" on tab ${tabID}`);
@@ -283,17 +297,19 @@ export async function type(payload: {
 export async function waitForSelector(payload: {
   tabID: string;
   selector: string;
-  options?: { timeout?: number; visible?: boolean; hidden?: boolean };
+  timeout?: string | number; 
+  visible?: string | boolean;
+  hidden?: string | boolean;
 }): Promise<BrowserResult> {
   try {
-    const { tabID, selector, options } = payload;
+    const { tabID, selector} = payload;
     const page = pagesMap.get(tabID);
     if (!page) return { success: false, error: `Không tìm thấy tab ${tabID}` };
 
     await page.waitForSelector(selector, {
-      timeout: options?.timeout ?? 30000,
-      visible: options?.visible ?? false,
-      hidden: options?.hidden ?? false,
+      timeout: payload?.timeout ? Number(payload.timeout) : 30000,
+      visible: payload?.visible ? Boolean(payload?.visible) : false,
+      hidden: payload?.hidden ? Boolean(payload?.hidden) : false,
     });
 
     console.log(`Selector "${selector}" appeared on tab ${tabID}`);
